@@ -12,6 +12,8 @@ Deploy the Meal Planner app to [Railway](https://railway.app) using this guide. 
 - [ ] You have a **Railway** account. Sign up at [railway.app](https://railway.app).
 - [ ] You have your **Anthropic (Claude) API key** for recipe generation.
 
+**Postgres only:** The app uses PostgreSQL. The build copies `prisma/schema.postgres.prisma` over `schema.prisma` before `prisma generate`, so the deployed app always uses the Postgres client regardless of repo or cache.
+
 ---
 
 ## Step 1: Create a project and connect GitHub

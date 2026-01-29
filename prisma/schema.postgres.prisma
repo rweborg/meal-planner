@@ -1,0 +1,83 @@
+// Canonical PostgreSQL schema — copied over schema.prisma at build time so deploy always uses Postgres.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model FamilyMember {
+  id          String       @id @default(cuid())
+  name        String
+  createdAt   DateTime     @default(now())
+  preferences Preference[]
+  ratings     Rating[]
+}
+
+model Preference {
+  id             String       @id @default(cuid())
+  familyMemberId String
+  category       String       // like, dislike, allergy, diet, cuisine
+  value          String
+  familyMember   FamilyMember @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+
+  @@index([familyMemberId])
+}
+
+model Recipe {
+  id            String           @id @default(cuid())
+  title         String
+  description   String
+  cuisine       String
+  prepTime      Int              // in minutes
+  cookTime      Int              // in minutes
+  ingredients   String           // JSON string
+  instructions  String           // JSON string
+  servings      Int
+  imageUrl      String?
+  tips          String?          // JSON string array of cooking tips
+  nutrition     String?          // JSON string with nutritional info
+  difficulty    String           @default("Medium") // Easy, Medium, Hard
+  familyMatch   String?          // JSON string with family member match scores
+  generatedAt   DateTime         @default(now())
+  aiPromptUsed  String?
+  ratings       Rating[]
+  mealPlanRecipes MealPlanRecipe[]
+}
+
+model Rating {
+  id             String       @id @default(cuid())
+  recipeId       String
+  familyMemberId String
+  score          Int          // 1-5
+  comment        String?
+  createdAt      DateTime     @default(now())
+  recipe         Recipe       @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  familyMember   FamilyMember @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId])
+  @@index([familyMemberId])
+}
+
+model MealPlan {
+  id        String           @id @default(cuid())
+  weekStart DateTime
+  createdAt DateTime         @default(now())
+  recipes   MealPlanRecipe[]
+}
+
+model MealPlanRecipe {
+  id         String   @id @default(cuid())
+  mealPlanId String
+  recipeId   String
+  dayOfWeek  Int      // 0 = Sunday, 6 = Saturday
+  mealType   String   // breakfast, lunch, dinner
+  mealPlan   MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([mealPlanId])
+  @@index([recipeId])
+}
