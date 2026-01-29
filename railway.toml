@@ -1,8 +1,8 @@
 # Railway deployment config (https://docs.railway.app/reference/config-as-code)
-# Build uses Postgres schema (schema.postgres.prisma copied at build time).
+# Build: copy Postgres schema, generate client, then next build (no dependency on package.json).
 
 [build]
-buildCommand = "npm run build"
+buildCommand = "node -e \"require('fs').copyFileSync('prisma/schema.postgres.prisma','prisma/schema.prisma')\" && npx prisma generate && npx next build"
 
 [deploy]
 preDeployCommand = "npx prisma migrate deploy"

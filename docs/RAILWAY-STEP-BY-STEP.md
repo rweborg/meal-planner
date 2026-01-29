@@ -53,22 +53,20 @@ Your app needs a database. On Railway, we use **PostgreSQL** (SQLite doesn’t p
 
 ## Step 3: Use PostgreSQL in your app (one-time code change)
 
-Your app’s Prisma config must use PostgreSQL when running on Railway.
+This repo is set up for **PostgreSQL only**. The build copies **`prisma/schema.postgres.prisma`** over `schema.prisma` before `prisma generate`, so the deployed app always uses the Postgres client.
 
-1. On your computer, open **`prisma/schema.prisma`** in this repo.
-2. Find the **`datasource db`** block (near the top).
-3. Change **`provider = "sqlite"`** to **`provider = "postgresql"`** so it looks like this:
+1. Ensure **`prisma/schema.prisma`** in the repo has **`provider = "postgresql"`** (or rely on the copy step in `railway.toml`).
+2. **Commit and push** to GitHub (e.g. `main`).
 
-   ```prisma
-   datasource db {
-     provider = "postgresql"
-     url      = env("DATABASE_URL")
-   }
-   ```
+**If builds still fail with “the URL must start with the protocol 'file:'”:** Railway may be ignoring `railway.toml` or using a cached build command. In Railway → your **app service** → **Settings** → **Build** → **Custom Build Command**: either **leave it empty** (so `railway.toml` is used) or set it to exactly:
 
-4. **Save the file**, then **commit and push** to GitHub (e.g. `main`).
+```bash
+node -e "require('fs').copyFileSync('prisma/schema.postgres.prisma','prisma/schema.prisma')" && npx prisma generate && npx next build
+```
 
-**Note:** For local development you’ll need a Postgres `DATABASE_URL` too (e.g. the same Railway URL, or a local Postgres / [Neon](https://neon.tech) free tier). Keep using that in your local `.env`.
+Then redeploy.
+
+**Note:** For local development use a Postgres `DATABASE_URL` in `.env` (e.g. Railway’s Postgres URL, or a local Postgres / [Neon](https://neon.tech) free tier).
 
 ---
 
