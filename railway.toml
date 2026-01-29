@@ -1,9 +1,9 @@
 # Railway deployment config (https://docs.railway.app/reference/config-as-code)
-# Build runs: npm run build (which includes prisma generate)
-# Before start, run migrations so the Postgres schema is up to date.
+# Build: ensure schema uses postgres (when on Railway), then prisma generate, then next build.
+# railway.toml runs this so the fix applies even if package.json build script is cached.
 
 [build]
-buildCommand = "npm run build"
+buildCommand = "node scripts/ensure-postgres-schema.js && npm run build"
 
 [deploy]
 preDeployCommand = "npx prisma migrate deploy"
