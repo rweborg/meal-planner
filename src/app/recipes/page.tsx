@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db';
 import RecipeCard from '@/components/RecipeCard';
 import { getFoodImageUrlAsync } from '@/lib/images';
 
+export const dynamic = 'force-dynamic';
+
 export default async function RecipesPage() {
   const recipes = await prisma.recipe.findMany({
     select: {

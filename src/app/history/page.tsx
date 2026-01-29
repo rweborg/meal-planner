@@ -6,6 +6,8 @@ import DeleteWeekButton from '@/components/DeleteWeekButton';
 import RatingStars from '@/components/RatingStars';
 import { getFoodImageUrlAsync } from '@/lib/images';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HistoryPage() {
   const mealPlans = await prisma.mealPlan.findMany({
     select: {

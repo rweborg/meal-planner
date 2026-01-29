@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db';
 import WeeklyPlan from '@/components/WeeklyPlan';
 import { getFoodImageUrlAsync } from '@/lib/images';
 
+export const dynamic = 'force-dynamic';
+
 function getWeekStart(date: Date): Date {
   const d = new Date(date);
   const day = d.getDay();
