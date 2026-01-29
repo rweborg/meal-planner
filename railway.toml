@@ -5,4 +5,5 @@
 buildCommand = "node scripts/copy-postgres-schema.js && npx prisma generate && npx next build"
 
 [deploy]
-preDeployCommand = "npx prisma migrate deploy"
+# Run copy script first so deploy env has correct migration_lock.toml and only Postgres migration
+preDeployCommand = "node scripts/copy-postgres-schema.js && npx prisma migrate deploy"
