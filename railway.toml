@@ -2,7 +2,7 @@
 # Build: copy Postgres schema, generate client, then next build (no dependency on package.json).
 
 [build]
-buildCommand = "node -e \"require('fs').copyFileSync('prisma/schema.postgres.prisma','prisma/schema.prisma')\" && npx prisma generate && npx next build"
+buildCommand = "node scripts/copy-postgres-schema.js && npx prisma generate && npx next build"
 
 [deploy]
 preDeployCommand = "npx prisma migrate deploy"

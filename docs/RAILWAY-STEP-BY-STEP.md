@@ -61,7 +61,7 @@ This repo is set up for **PostgreSQL only**. The build copies **`prisma/schema.p
 **If builds still fail with “the URL must start with the protocol 'file:'”:** Railway may be ignoring `railway.toml` or using a cached build command. In Railway → your **app service** → **Settings** → **Build** → **Custom Build Command**: either **leave it empty** (so `railway.toml` is used) or set it to exactly:
 
 ```bash
-node -e "require('fs').copyFileSync('prisma/schema.postgres.prisma','prisma/schema.prisma')" && npx prisma generate && npx next build
+node scripts/copy-postgres-schema.js && npx prisma generate && npx next build
 ```
 
 Then redeploy.
