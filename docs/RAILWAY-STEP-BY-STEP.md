@@ -90,13 +90,27 @@ Then redeploy.
 
 ---
 
-## Step 5: Migrations (already configured)
+## Step 5: Migrations (run manually after first deploy)
 
-This repo’s **`railway.toml`** is set up so Railway runs **`npx prisma migrate deploy`** before each deploy. You don’t need to set a “Release command” in the UI unless you want to override it.
+Pre-deploy migrations are **disabled** in this repo so the deploy step succeeds. After your first successful deploy, run migrations **once** so the Postgres database has the tables:
 
-- If you ever need to run migrations by hand (e.g. first time), use:  
-  `DATABASE_URL="your-postgres-url" npx prisma migrate deploy`  
-  with the same URL your app uses on Railway.
+**Option A – Railway Shell (if available):**  
+Open your **app service** → **Shell** or **Console** → run:
+```bash
+npx prisma migrate deploy
+```
+(Environment already has `DATABASE_URL`.)
+
+**Option B – From your computer:**  
+1. In Railway, open your **Postgres** service → **Variables** → copy **`DATABASE_URL`**.  
+2. In a terminal in your project folder, run (replace with your URL):
+```bash
+set DATABASE_URL=postgresql://...
+npx prisma migrate deploy
+```
+(On Mac/Linux use `export DATABASE_URL=...` instead of `set`.)
+
+After migrations run once, the app can use the database. You only need to run this again when you add new migrations.
 
 ---
 
@@ -107,7 +121,7 @@ This repo’s **`railway.toml`** is set up so Railway runs **`npx prisma migrate
 1. Trigger a deploy:
    - **Option A:** Push a new commit to the branch Railway is watching (e.g. `main`).  
    - **Option B:** In the Railway dashboard, open your app service and click **"Deploy"** or **"Redeploy"**.
-2. Wait until the **build** and **pre-deploy** (migrations) finish. Check the **"Deployments"** or **"Logs"** tab if something fails.
+2. Wait until the **build** and **deploy** finish (no pre-deploy step). Check the **"Deployments"** or **"Logs"** tab if something fails.
 3. Generate a public URL:
    - Open your **app service** → **"Settings"** (or **"Variables"** area).
    - Find **"Networking"** or **"Public networking"**.
@@ -124,7 +138,7 @@ This repo’s **`railway.toml`** is set up so Railway runs **`npx prisma migrate
 - [ ] **Step 2:** PostgreSQL service added and (if needed) `DATABASE_URL` copied or linked to app.
 - [ ] **Step 3:** `prisma/schema.prisma` uses `provider = "postgresql"` and changes are pushed to GitHub.
 - [ ] **Step 4:** App service has `DATABASE_URL` and `ANTHROPIC_API_KEY` (and optionally `UNSPLASH_ACCESS_KEY`) in Variables.
-- [ ] **Step 5:** No extra action if `railway.toml` is in the repo (migrations run automatically).
+- [ ] **Step 5:** After first deploy, run migrations once (Railway Shell or local with `DATABASE_URL`).
 - [ ] **Step 6:** Deploy succeeded and you opened the app via the generated domain.
 
 ---
