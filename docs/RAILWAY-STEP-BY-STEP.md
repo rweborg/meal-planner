@@ -135,4 +135,34 @@ This repo’s **`railway.toml`** is set up so Railway runs **`npx prisma migrate
 - **App crashes or “Database” errors:** Ensure `DATABASE_URL` is set on the **app** service and matches the Postgres service. Run migrations once manually if needed (Step 5).
 - **Recipe generation doesn’t work:** Confirm `ANTHROPIC_API_KEY` is set and valid in the app’s Variables.
 
+### “The URL must start with the protocol 'file:'” (SQLite vs Postgres)
+
+This means Railway is building with **SQLite** in `prisma/schema.prisma` while `DATABASE_URL` is a **Postgres** URL. Fix it by making sure the code Railway builds from uses Postgres and by clearing cache:
+
+1. **Confirm on GitHub**  
+   Open your repo on GitHub → **prisma/schema.prisma** (on the branch Railway deploys from, usually `main`). The file must contain:
+   ```prisma
+   datasource db {
+     provider = "postgresql"
+     url      = env("DATABASE_URL")
+   }
+   ```
+   If it still says `provider = "sqlite"`, update it locally, then push:
+   ```bash
+   git add prisma/schema.prisma
+   git commit -m "Use postgresql in schema for Railway"
+   git push origin main
+   ```
+
+2. **Clear Railway’s build cache**  
+   In Railway: open your **app service** → **Settings** → find **“Build”** or **“Clear build cache”** (or **“Redeploy”** with **“Clear cache”** if offered). Trigger a new deploy so the build doesn’t reuse an old copy of the repo.
+
+3. **Check the branch Railway uses**  
+   In your app service **Settings**, confirm the **branch** (e.g. `main`) is the same one where you pushed the `postgresql` change.
+
+4. **Redeploy**  
+   Click **Deploy** / **Redeploy** and watch the build logs. The build should run `prisma generate` with `provider = "postgresql"` and the error should go away.
+
+**Automatic fix in this repo:** The build runs `scripts/ensure-postgres-schema.js` before `prisma generate`. When `DATABASE_URL` is a Postgres URL (as on Railway), that script rewrites `schema.prisma` to use `provider = "postgresql"` if it still says `sqlite`, so the correct client is generated even when the repo or cache has the old schema.
+
 For more detail, see the main **[DEPLOY.md](../DEPLOY.md)** in the repo root.
