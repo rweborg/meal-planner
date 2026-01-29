@@ -79,6 +79,24 @@ git push -u origin main
 
 ---
 
+## If push is rejected
+
+If you see "Updates were rejected because the remote contains work that you do not have locally", GitHub has commits you don't have locally. Pull first, then push:
+
+```bash
+git pull origin main
+```
+
+If Git opens an editor for a merge message, save and close it. Then:
+
+```bash
+git push origin main
+```
+
+To keep a linear history: `git pull --rebase origin main` then `git push origin main`.
+
+---
+
 ## Summary (copy-paste)
 
 Once Git is installed and you’re in `meal-planner` in the terminal:
