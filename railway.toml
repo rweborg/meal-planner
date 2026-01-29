@@ -5,5 +5,4 @@
 buildCommand = "node scripts/copy-postgres-schema.js && npx prisma generate && npx next build"
 
 [deploy]
-# Run migrations manually once after first deploy: Railway shell or locally with DATABASE_URL
-# preDeployCommand = "npx prisma migrate deploy"
+preDeployCommand = "npx prisma migrate deploy"
