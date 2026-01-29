@@ -1,0 +1,9 @@
+# Railway deployment config (https://docs.railway.app/reference/config-as-code)
+# Build runs: npm run build (which includes prisma generate)
+# Before start, run migrations so the Postgres schema is up to date.
+
+[build]
+buildCommand = "npm run build"
+
+[deploy]
+preDeployCommand = ["npx", "prisma", "migrate", "deploy"]
