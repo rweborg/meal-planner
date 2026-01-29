@@ -19,3 +19,14 @@ provider = "postgresql"
 `;
 fs.writeFileSync(lockPath, lockContent);
 console.log('copy-postgres-schema: set migration_lock.toml provider = postgresql');
+
+// 3. Remove old SQLite migration folders so only the Postgres migration remains (fixes "2 migrations found")
+const migrationsDir = path.join(prismaDir, 'migrations');
+const oldSqliteMigrations = ['20260126165133_init', '20260126203819_add_recipe_details'];
+for (const name of oldSqliteMigrations) {
+  const dir = path.join(migrationsDir, name);
+  if (fs.existsSync(dir)) {
+    fs.rmSync(dir, { recursive: true });
+    console.log('copy-postgres-schema: removed old SQLite migration', name);
+  }
+}
