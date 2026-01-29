@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
-    "build": "node scripts/ensure-postgres-schema.js && prisma generate && next build",
+    "prebuild": "node scripts/ensure-postgres-schema.js",
+    "build": "prisma generate && next build",
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "next lint"
