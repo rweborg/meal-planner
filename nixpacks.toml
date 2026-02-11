@@ -1,0 +1,6 @@
+# Explicit npm build so Railway/Nixpacks doesn't fail on "No package manager inferred"
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["node scripts/copy-postgres-schema.js && npx prisma generate && npx next build"]
