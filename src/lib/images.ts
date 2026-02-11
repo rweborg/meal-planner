@@ -559,6 +559,10 @@ function hashString(str: string): number {
   return Math.abs(hash);
 }
 
+export async function getFoodImageUrlAsync(searchTerm: string, cuisine?: string): Promise<string> {
+  return getFoodImageUrl(searchTerm, cuisine);
+}
+
 export function getFoodImageUrl(searchTerm: string, cuisine?: string): string {
   const lowerSearch = searchTerm.toLowerCase();
 
