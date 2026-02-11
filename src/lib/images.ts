@@ -1,5 +1,29 @@
 // Image service for fetching food photos
-// Uses curated Unsplash images for reliable, high-quality food photos
+// Uses Unsplash API when UNSPLASH_ACCESS_KEY is set for accurate recipe-matched images,
+// otherwise falls back to curated static mappings
+
+const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
+
+async function searchUnsplashPhotos(query: string): Promise<string | null> {
+  if (!UNSPLASH_ACCESS_KEY) return null;
+  const searchQuery = encodeURIComponent(`${query} food dish`);
+  try {
+    const res = await fetch(
+      `https://api.unsplash.com/search/photos?query=${searchQuery}&per_page=5&orientation=landscape`,
+      {
+        headers: { Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}` },
+        next: { revalidate: 86400 }, // Cache for 24h
+      }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { results?: { urls?: { regular?: string } }[] };
+    const first = data.results?.[0];
+    if (!first?.urls?.regular) return null;
+    return `${first.urls.regular}&w=800&h=600&fit=crop`;
+  } catch {
+    return null;
+  }
+}
 
 // HIGH PRIORITY: Specific dish types (check these first)
 const DISH_TYPE_IMAGES: Record<string, string[]> = {
@@ -507,6 +531,8 @@ const SPECIFIC_DISHES: Record<string, string> = {
   'slow cooker': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800&h=600&fit=crop',
   'instant pot': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800&h=600&fit=crop',
   'air fryer': 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=800&h=600&fit=crop',
+  'bacon-wrapped pork tenderloin': 'https://images.unsplash.com/photo-1606728035253-49e8a23146de?w=800&h=600&fit=crop',
+  'pork tenderloin': 'https://images.unsplash.com/photo-1606728035253-49e8a23146de?w=800&h=600&fit=crop',
   'balsamic': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&h=600&fit=crop',
   'mediterranean': 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&h=600&fit=crop',
   'greek': 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&h=600&fit=crop',
@@ -560,6 +586,10 @@ function hashString(str: string): number {
 }
 
 export async function getFoodImageUrlAsync(searchTerm: string, cuisine?: string): Promise<string> {
+  // Try Unsplash API first for accurate recipe-matched images
+  const apiUrl = await searchUnsplashPhotos(searchTerm);
+  if (apiUrl) return apiUrl;
+  // Fall back to static curated mappings
   return getFoodImageUrl(searchTerm, cuisine);
 }
 

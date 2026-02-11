@@ -204,7 +204,7 @@ Return ONLY a valid JSON array with ${mealCount} recipes. No markdown, no extra 
   "cookTime": 30,
   "servings": 4,
   "difficulty": "Medium",
-  "ingredients": ["ingredient 1", "ingredient 2"],
+  "ingredients": ["2 chicken breasts", "1 cup breadcrumbs", "1/2 cup parmesan cheese", "2 eggs", "1 cup marinara sauce", "1 cup shredded mozzarella", "2 medium zucchini"],
   "instructions": ["Step 1", "Step 2"],
   "tips": ["Tip 1"],
   "nutrition": {"calories": 450, "protein": "30g", "carbs": "40g", "fat": "15g"},
@@ -216,6 +216,8 @@ Return ONLY a valid JSON array with ${mealCount} recipes. No markdown, no extra 
 
 IMPORTANT INSTRUCTIONS:
 - Return valid JSON only. No trailing commas. No comments.
+- For ingredients: EACH ingredient MUST include quantity and unit. Use standard measurements: cups, tbsp, tsp, oz, lb, g, ml, cloves, slices, etc. Examples: "2 chicken breasts", "1 cup breadcrumbs", "1/2 tsp salt", "3 cloves garlic", "1 medium onion", "2 tbsp olive oil". Never list ingredients without amounts.
+- For instructions: Write clear, detailed steps. Include specific temperatures (e.g., "375°F"), times, and techniques. Each step should be actionable.
 - For familyMatch: Include a score (0-100) for EACH family member indicating how likely they are to enjoy the dish based on their preferences. Consider their likes, dislikes, favorite cuisines, dietary restrictions, and notes. The reason should be a brief explanation (e.g., "loves Italian cuisine" or "contains disliked ingredient").`;
 
   return prompt;

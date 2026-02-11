@@ -313,12 +313,15 @@ export default function RecipeDetailPage() {
       {/* Ingredients & Instructions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4">Ingredients</h2>
-          <ul className="space-y-2">
+          <h2 className="text-xl font-semibold mb-2">Ingredients</h2>
+          <p className="text-sm text-gray-500 mb-4">For {recipe.servings} servings</p>
+          <ul className="space-y-3">
             {recipe.ingredients.map((ingredient, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <span className="text-blue-600">•</span>
-                <span>{ingredient}</span>
+              <li key={i} className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-medium">
+                  {i + 1}
+                </span>
+                <span className="text-gray-700 leading-relaxed">{ingredient}</span>
               </li>
             ))}
           </ul>
