@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { buildRecipeGenerationPrompt, parseRecipeResponse, FamilyPreferences, RatingInfo, validateAndRecalculateScores } from '@/lib/prompts';
+import { buildRecipeGenerationPrompt, parseRecipeResponse, FamilyPreferences, RatingInfo } from '@/lib/prompts';
 import { getFoodImageUrl } from '@/lib/images';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -152,37 +152,50 @@ export async function POST(request: NextRequest) {
         sendStatus('Processing recipe suggestions...', 7, totalSteps);
         const recipes = parseRecipeResponse(responseText);
 
-        // Validate and recalculate scores using deterministic logic
-        // This ensures dislikes result in low scores (0-20) as expected
-        const validatedRecipes = validateAndRecalculateScores(recipes, familyPreferences);
+        // Step 8: Save recipes (with timeout so client doesn't hang)
+        sendStatus(`Saving ${recipes.length} recipes with images...`, 8, totalSteps);
+        const SAVE_TIMEOUT_MS = 60_000; // 60s
+        let savedRecipes: Awaited<ReturnType<typeof prisma.recipe.create>>[];
+        try {
+          const savePromise = Promise.all(
+            recipes.map(async (recipe) => {
+              const searchTerm = recipe.imageSearchTerm || recipe.title;
+              const imageUrl = getFoodImageUrl(searchTerm, recipe.cuisine);
 
-        // Step 8: Save recipes
-        sendStatus(`Saving ${validatedRecipes.length} recipes with images...`, 8, totalSteps);
-        const savedRecipes = await Promise.all(
-          validatedRecipes.map(async (recipe) => {
-            const searchTerm = recipe.imageSearchTerm || recipe.title;
-            const imageUrl = getFoodImageUrl(searchTerm, recipe.cuisine);
-
-            return prisma.recipe.create({
-              data: {
-                title: recipe.title,
-                description: recipe.description,
-                cuisine: recipe.cuisine,
-                prepTime: recipe.prepTime,
-                cookTime: recipe.cookTime,
-                servings: recipe.servings,
-                difficulty: recipe.difficulty || 'Medium',
-                ingredients: JSON.stringify(recipe.ingredients),
-                instructions: JSON.stringify(recipe.instructions),
-                tips: JSON.stringify(recipe.tips || []),
-                nutrition: JSON.stringify(recipe.nutrition || null),
-                familyMatch: JSON.stringify(recipe.familyMatch || []),
-                imageUrl,
-                aiPromptUsed: prompt,
-              },
-            });
-          })
-        );
+              return prisma.recipe.create({
+                data: {
+                  title: recipe.title,
+                  description: recipe.description,
+                  cuisine: recipe.cuisine,
+                  prepTime: recipe.prepTime,
+                  cookTime: recipe.cookTime,
+                  servings: recipe.servings,
+                  difficulty: recipe.difficulty || 'Medium',
+                  ingredients: JSON.stringify(recipe.ingredients),
+                  instructions: JSON.stringify(recipe.instructions),
+                  tips: JSON.stringify(recipe.tips || []),
+                  nutrition: JSON.stringify(recipe.nutrition || null),
+                  familyMatch: JSON.stringify(recipe.familyMatch || []),
+                  imageUrl,
+                  aiPromptUsed: prompt,
+                },
+              });
+            })
+          );
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Saving recipes timed out. Try again or check database connection.')), SAVE_TIMEOUT_MS)
+          );
+          savedRecipes = await Promise.race([savePromise, timeoutPromise]);
+        } catch (dbError) {
+          const msg = dbError instanceof Error ? dbError.message : String(dbError);
+          sendError(
+            msg.includes('exist') || msg.includes('migrate')
+              ? 'Database tables missing. Run migrations once: set DATABASE_URL to your Railway Postgres public URL, then run: npx prisma migrate deploy'
+              : `Could not save recipes: ${msg}`
+          );
+          controller.close();
+          return;
+        }
 
         sendComplete(savedRecipes);
         controller.close();

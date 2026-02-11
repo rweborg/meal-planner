@@ -21,29 +21,43 @@ export async function POST(request: NextRequest) {
   }
 
   const weekStart = getWeekStart(new Date());
+  const recipeIds = recipes.slice(0, 7).map((r: { id?: string }) => r?.id).filter(Boolean);
+  if (recipeIds.length === 0) {
+    return NextResponse.json(
+      { error: 'Each recipe must have an id. Got: ' + JSON.stringify(recipes.slice(0, 1)) },
+      { status: 400 }
+    );
+  }
 
-  // Create meal plan with recipes assigned to each day
-  const mealPlan = await prisma.mealPlan.create({
-    data: {
-      weekStart,
-      recipes: {
-        create: recipes.slice(0, 7).map((recipe: { id: string }, index: number) => ({
-          recipeId: recipe.id,
-          dayOfWeek: index,
-          mealType: 'dinner',
-        })),
-      },
-    },
-    include: {
-      recipes: {
-        include: {
-          recipe: true,
+  try {
+    const mealPlan = await prisma.mealPlan.create({
+      data: {
+        weekStart,
+        recipes: {
+          create: recipeIds.map((recipeId, index) => ({
+            recipeId,
+            dayOfWeek: index,
+            mealType: 'dinner',
+          })),
         },
       },
-    },
-  });
-
-  return NextResponse.json(mealPlan, { status: 201 });
+      include: {
+        recipes: {
+          include: {
+            recipe: true,
+          },
+        },
+      },
+    });
+    return NextResponse.json(mealPlan, { status: 201 });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('Meal plan create error:', err);
+    return NextResponse.json(
+      { error: 'Could not create meal plan: ' + msg },
+      { status: 500 }
+    );
+  }
 }
 
 export async function GET(request: NextRequest) {

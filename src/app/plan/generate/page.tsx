@@ -39,19 +39,10 @@ export default function GeneratePlanPage() {
 
   useEffect(() => {
     const fetchMembers = async () => {
-      try {
-        const res = await fetch('/api/family');
-        if (!res.ok) {
-          throw new Error(`Failed to fetch: ${res.status}`);
-        }
-        const data = await res.json();
-        setMembers(data);
-      } catch (err) {
-        console.error('Error fetching family members:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load family members');
-      } finally {
-        setLoading(false);
-      }
+      const res = await fetch('/api/family');
+      const data = await res.json();
+      setMembers(data);
+      setLoading(false);
     };
     fetchMembers();
   }, []);
@@ -122,7 +113,7 @@ export default function GeneratePlanPage() {
       }
 
       if (recipes) {
-        setCurrentStatus({ status: 'Creating meal option...', step: 9, totalSteps: 9 });
+        setCurrentStatus({ status: 'Creating meal plan...', step: 9, totalSteps: 9 });
 
         // Create meal plan
         const planRes = await fetch('/api/meal-plans', {
@@ -132,7 +123,9 @@ export default function GeneratePlanPage() {
         });
 
         if (!planRes.ok) {
-          throw new Error('Failed to create meal option');
+          const errBody = await planRes.json().catch(() => ({}));
+          const message = (errBody as { error?: string })?.error || planRes.statusText || 'Failed to create meal plan';
+          throw new Error(message);
         }
 
         setCurrentStatus({ status: 'Done! Redirecting...', step: 9, totalSteps: 9 });
@@ -148,31 +141,7 @@ export default function GeneratePlanPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
-          <div className="text-gray-500">Loading family members...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && members.length === 0) {
-    return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-red-800 mb-2">Error Loading Page</h2>
-          <p className="text-red-700 mb-4">{error}</p>
-          <button
-            onClick={() => {
-              setError(null);
-              setLoading(true);
-              window.location.reload();
-            }}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-          >
-            Retry
-          </button>
-        </div>
+        <div className="text-gray-500">Loading...</div>
       </div>
     );
   }
@@ -181,35 +150,22 @@ export default function GeneratePlanPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-green-500 via-green-400 to-emerald-400 rounded-xl p-8 shadow-lg border-4 border-green-600 text-center">
-        <div className="inline-flex items-center justify-center p-3 bg-white/20 backdrop-blur-sm rounded-xl mb-4">
-          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-        </div>
-        <h1 className="text-4xl font-bold text-white drop-shadow-md mb-2">Generate Meal Option</h1>
-        <p className="text-white/90 text-lg">
-          Create a personalized weekly dinner option for your family
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-gray-900">Generate Meal Plan</h1>
+        <p className="text-gray-600 mt-2">
+          Create a personalized weekly dinner plan for your family
         </p>
       </div>
 
       {/* Family Overview */}
-      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-lg p-6 border-2 border-green-200">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-green-500 rounded-lg">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-bold text-gray-900">Family Members</h2>
-        </div>
+      <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
+        <h2 className="text-lg font-semibold mb-4">Family Members</h2>
         {members.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-600 mb-4 text-lg">No family members added yet.</p>
+          <div className="text-center py-4">
+            <p className="text-gray-500 mb-4">No family members added yet.</p>
             <button
               onClick={() => router.push('/family')}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="text-blue-600 hover:underline"
             >
               Add family members
             </button>
@@ -219,17 +175,10 @@ export default function GeneratePlanPage() {
             {members.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center justify-between p-4 bg-white rounded-xl border-2 border-green-100 hover:border-green-300 transition-all shadow-sm hover:shadow-md"
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
               >
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${member._count.preferences > 0 ? 'bg-green-100' : 'bg-orange-100'}`}>
-                    <svg className={`w-5 h-5 ${member._count.preferences > 0 ? 'text-green-600' : 'text-orange-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <span className="font-bold text-gray-900 text-lg">{member.name}</span>
-                </div>
-                <span className={`text-sm font-semibold px-3 py-1.5 rounded-full ${member._count.preferences > 0 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                <span className="font-medium">{member.name}</span>
+                <span className={`text-sm ${member._count.preferences > 0 ? 'text-green-600' : 'text-orange-500'}`}>
                   {member._count.preferences > 0
                     ? `${member._count.preferences} preferences`
                     : 'No preferences set'}
@@ -242,18 +191,14 @@ export default function GeneratePlanPage() {
 
       {/* Warning if no preferences */}
       {members.length > 0 && membersWithPreferences.length === 0 && (
-        <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-6 shadow-lg">
-          <div className="flex items-start gap-4">
-            <div className="p-2 bg-yellow-500 rounded-lg">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-yellow-800 text-lg mb-1">No Preferences Set</h3>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <span className="text-yellow-500 text-xl">⚠️</span>
+            <div>
+              <h3 className="font-medium text-yellow-800">No Preferences Set</h3>
               <p className="text-sm text-yellow-700 mt-1">
                 For best results, add food preferences for at least one family member
-                before generating a meal option.
+                before generating a meal plan.
               </p>
             </div>
           </div>
@@ -261,12 +206,12 @@ export default function GeneratePlanPage() {
       )}
 
       {/* Generate Button / Progress */}
-      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-lg p-6 border-2 border-green-200">
+      <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
         {generating ? (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Generating Your Meal Option</h2>
-              <p className="text-gray-600 text-lg">Please wait while we create personalized recipes...</p>
+              <h2 className="text-lg font-semibold mb-2">Generating Your Meal Plan</h2>
+              <p className="text-gray-500 text-sm">Please wait while we create personalized recipes...</p>
             </div>
 
             {/* Current Step Display */}
@@ -303,15 +248,15 @@ export default function GeneratePlanPage() {
           </div>
         ) : (
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Ready to Generate?</h2>
-            <p className="text-gray-600 mb-8 text-lg">
+            <h2 className="text-lg font-semibold mb-2">Ready to Generate?</h2>
+            <p className="text-gray-600 mb-6">
               Our AI will create 7 dinner recipes tailored to your family&apos;s preferences.
             </p>
 
             <button
               onClick={generatePlan}
               disabled={members.length === 0}
-              className="inline-flex items-center gap-3 px-10 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1 disabled:transform-none"
+              className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Generate Weekly Plan
             </button>
