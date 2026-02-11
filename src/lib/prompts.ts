@@ -234,6 +234,91 @@ export interface FamilyMatchScore {
   reason: string;
 }
 
+export interface RecipeMatchInput {
+  title: string;
+  cuisine: string;
+  ingredients: string[];
+  description?: string | null;
+}
+
+/**
+ * Calculates how well a recipe matches a family member's preferences (0-100).
+ * Used when recalculating scores after preference updates.
+ */
+export function calculateRecipeMatchScore(
+  recipe: RecipeMatchInput,
+  member: FamilyPreferences
+): { score: number; reason: string } {
+  const text = [
+    recipe.title,
+    recipe.description ?? '',
+    recipe.cuisine,
+    ...recipe.ingredients,
+  ]
+    .join(' ')
+    .toLowerCase();
+
+  const reasons: string[] = [];
+
+  // Critical: allergies - any match = very low score
+  for (const allergy of member.allergies) {
+    if (allergy && text.includes(allergy.toLowerCase())) {
+      return {
+        score: 10,
+        reason: `Contains allergen: ${allergy}`,
+      };
+    }
+  }
+
+  // Dietary restrictions - significant penalty
+  for (const diet of member.diets) {
+    const dietLower = diet.toLowerCase();
+    if (dietLower.includes('vegetarian') && /\b(beef|pork|chicken|fish|meat|bacon)\b/.test(text)) {
+      return { score: 15, reason: 'Contains meat; conflicts with vegetarian diet' };
+    }
+    if (dietLower.includes('vegan') && /\b(beef|pork|chicken|fish|meat|bacon|egg|dairy|cheese|milk)\b/.test(text)) {
+      return { score: 15, reason: 'Contains animal products; conflicts with vegan diet' };
+    }
+  }
+
+  // Dislikes - subtract points
+  let score = 70;
+  for (const dislike of member.dislikes) {
+    if (dislike && text.includes(dislike.toLowerCase())) {
+      score -= 25;
+      reasons.push(`contains disliked: ${dislike}`);
+    }
+  }
+
+  // Positive matches
+  if (member.cuisines.some((c) => text.includes(c.toLowerCase()))) {
+    score += 15;
+    reasons.push('matches favorite cuisine');
+  }
+  if (member.favoriteDishes.some((d) => text.includes(d.toLowerCase()))) {
+    score += 10;
+    reasons.push('similar to favorite dish');
+  }
+  if (member.favoriteMeats.some((m) => text.includes(m.toLowerCase()))) {
+    score += 8;
+    reasons.push('contains preferred protein');
+  }
+  if (member.favoriteVeggies.some((v) => text.includes(v.toLowerCase()))) {
+    score += 5;
+    reasons.push('contains preferred vegetable');
+  }
+  if (member.likes.some((l) => text.includes(l.toLowerCase()))) {
+    score += 5;
+    reasons.push('includes liked ingredient');
+  }
+
+  score = Math.max(0, Math.min(100, score));
+  return {
+    score,
+    reason: reasons.length > 0 ? reasons.join('; ') : 'General match to preferences',
+  };
+}
+
 export interface RecipeOutput {
   title: string;
   description: string;
