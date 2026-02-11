@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
-    "build": "node scripts/copy-postgres-schema.js && prisma generate && next build",
+    "build": "node -e \"require('fs').copyFileSync('prisma/schema.postgres.prisma','prisma/schema.prisma')\" && prisma generate && next build",
     "start": "next start",
-    "postinstall": "node scripts/copy-postgres-schema.js && prisma generate",
+    "postinstall": "prisma generate",
     "lint": "next lint"
   },
   "dependencies": {

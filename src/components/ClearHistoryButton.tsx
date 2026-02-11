@@ -34,7 +34,7 @@ export default function ClearHistoryButton() {
   };
 
   if (confirmAction) {
-    const label = confirmAction === 'plans' ? 'meal options' : 'all recipes';
+    const label = confirmAction === 'plans' ? 'meal plans' : 'all recipes';
     return (
       <div className="flex items-center gap-2 bg-white p-2 rounded-lg shadow-lg border">
         <span className="text-sm text-red-600 font-medium">Delete {label}?</span>
@@ -81,8 +81,8 @@ export default function ClearHistoryButton() {
               }}
               className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              <div className="font-medium text-gray-900">Clear Meal Options</div>
-              <div className="text-sm text-gray-500">Remove meal option history only</div>
+              <div className="font-medium text-gray-900">Clear Meal Plans</div>
+              <div className="text-sm text-gray-500">Remove meal plan history only</div>
             </button>
             <button
               onClick={() => {

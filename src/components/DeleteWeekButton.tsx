@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 interface DeleteWeekButtonProps {
   mealPlanId: string;
@@ -12,7 +12,6 @@ export default function DeleteWeekButton({ mealPlanId, weekLabel }: DeleteWeekBu
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -22,22 +21,15 @@ export default function DeleteWeekButton({ mealPlanId, weekLabel }: DeleteWeekBu
       });
 
       if (response.ok) {
-        // If on history page, refresh it. Otherwise redirect to dashboard
-        // The dashboard will automatically show the correct state since it's a server component
-        if (pathname === '/history') {
-          router.refresh();
-        } else {
-          router.push('/');
-        }
+        router.refresh();
       } else {
         const data = await response.json();
-        alert(data.error || 'Failed to delete meal option');
-        setIsDeleting(false);
-        setShowConfirm(false);
+        alert(data.error || 'Failed to delete meal plan');
       }
     } catch (error) {
-      console.error('Error deleting meal option:', error);
-      alert('Failed to delete meal option');
+      console.error('Error deleting meal plan:', error);
+      alert('Failed to delete meal plan');
+    } finally {
       setIsDeleting(false);
       setShowConfirm(false);
     }

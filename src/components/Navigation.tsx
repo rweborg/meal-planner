@@ -8,7 +8,7 @@ const navItems = [
   { href: '/family', label: 'Family' },
   { href: '/plan/generate', label: 'Generate Plan' },
   { href: '/recipes', label: 'Recipes' },
-  { href: '/history', label: 'Weekly Meal Options' },
+  { href: '/history', label: 'History' },
 ];
 
 export default function Navigation() {

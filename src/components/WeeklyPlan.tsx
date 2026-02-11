@@ -1,8 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import { getFoodImageUrl } from '@/lib/images';
 
 interface FamilyMatchScore {
   name: string;
@@ -21,7 +19,6 @@ interface MealPlanRecipe {
     cuisine: string;
     prepTime: number;
     cookTime: number;
-    imageUrl?: string | null;
     familyMatch?: string | null;
   };
 }
@@ -76,39 +73,21 @@ export default function WeeklyPlan({ weekStart, meals, onRegenerateMeal }: Weekl
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
         {DAYS.map((day, index) => {
           const dinner = getMealForDay(index, 'dinner');
-          // Use pre-fetched image (from Unsplash search when API key set) or fallback to keyword match
-          const imageUrl = dinner?.recipe.imageUrl ?? (dinner ? getFoodImageUrl(dinner.recipe.title, dinner.recipe.cuisine) : null);
-          
           return (
-            <div key={day} className="bg-white rounded-lg shadow overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow">
-              <div className="text-center p-3 bg-gray-50 border-b border-gray-200">
+            <div key={day} className="bg-white rounded-lg shadow p-4 border border-gray-200">
+              <div className="text-center mb-3">
                 <h3 className="font-semibold text-gray-900">{day}</h3>
-                <p className="text-xs text-gray-500">{formatDate(index)}</p>
+                <p className="text-sm text-gray-500">{formatDate(index)}</p>
               </div>
 
-              <div className="p-3">
-                {dinner ? (
-                  <div className="space-y-2">
-                    {/* Recipe Image */}
-                    {imageUrl && (
-                      <Link href={`/recipes/${dinner.recipe.id}`} className="block mb-2">
-                        <div className="relative w-full h-24 rounded-lg overflow-hidden bg-gray-100">
-                          <Image
-                            src={imageUrl}
-                            alt={dinner.recipe.title}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 14vw"
-                          />
-                        </div>
-                      </Link>
-                    )}
-                    
-                    {/* Recipe Info */}
-                    <div className="space-y-1.5">
+              <div className="space-y-2">
+                <div className="border-t pt-2">
+                  <p className="text-xs font-medium text-gray-500 uppercase mb-2">Dinner</p>
+                  {dinner ? (
+                    <div className="space-y-2">
                       <Link
                         href={`/recipes/${dinner.recipe.id}`}
-                        className="block text-sm font-bold text-gray-900 hover:text-blue-600 hover:underline line-clamp-2"
+                        className="block text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
                       >
                         {dinner.recipe.title}
                       </Link>
@@ -131,17 +110,10 @@ export default function WeeklyPlan({ weekStart, meals, onRegenerateMeal }: Weekl
                         </button>
                       )}
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <div className="p-4 bg-gray-100 rounded-full mb-3">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                    </div>
-                    <p className="text-sm font-medium text-gray-400">No meal planned</p>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-sm text-gray-400 italic">No meal planned</p>
+                  )}
+                </div>
               </div>
             </div>
           );

@@ -15,7 +15,7 @@ export async function DELETE(
 
     if (!mealPlan) {
       return NextResponse.json(
-        { error: 'Meal option not found' },
+        { error: 'Meal plan not found' },
         { status: 404 }
       );
     }
@@ -36,12 +36,12 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: 'Meal option deleted successfully (recipes preserved)',
+      message: 'Meal plan deleted successfully (recipes preserved)',
     });
   } catch (error) {
     console.error('Error deleting meal plan:', error);
     return NextResponse.json(
-      { error: 'Failed to delete meal option' },
+      { error: 'Failed to delete meal plan' },
       { status: 500 }
     );
   }

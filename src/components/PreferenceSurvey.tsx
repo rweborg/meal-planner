@@ -95,7 +95,7 @@ export default function PreferenceSurvey({
     <div className="space-y-8">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900">Food Preferences for {memberName}</h2>
-        <p className="text-gray-600 mt-2">Tell us what you like and we&apos;ll create better meal options</p>
+        <p className="text-gray-600 mt-2">Tell us what you like and we&apos;ll create better meal plans</p>
       </div>
 
       {/* Favorite Cuisines */}

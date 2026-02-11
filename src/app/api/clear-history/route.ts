@@ -14,7 +14,7 @@ export async function DELETE() {
 
     return NextResponse.json({
       success: true,
-      message: 'All meal options have been deleted (recipes preserved)'
+      message: 'All meal plans have been deleted (recipes preserved)'
     });
   } catch (error) {
     console.error('Error clearing history:', error);

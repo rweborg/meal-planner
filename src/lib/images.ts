@@ -3,11 +3,7 @@
 
 // HIGH PRIORITY: Specific dish types (check these first)
 const DISH_TYPE_IMAGES: Record<string, string[]> = {
-  // Pasta dishes – match specific stuffed-shell dishes before generic "shells" or "chicken"
-  'chicken and spinach stuffed shells': [
-    'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1595295333158-4742f28fbd85?w=800&h=600&fit=crop',
-  ],
+  // Pasta dishes
   'stuffed shells': [
     'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=800&h=600&fit=crop',
     'https://images.unsplash.com/photo-1595295333158-4742f28fbd85?w=800&h=600&fit=crop',
@@ -287,6 +283,9 @@ const DISH_TYPE_IMAGES: Record<string, string[]> = {
   'sausage': [
     'https://images.unsplash.com/photo-1587334207407-daa6d1d4a1e2?w=800&h=600&fit=crop',
   ],
+  'meatball': [
+    'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=800&h=600&fit=crop',
+  ],
   'ground beef': [
     'https://images.unsplash.com/photo-1551360374-84b8a21e8a1e?w=800&h=600&fit=crop',
   ],
@@ -321,6 +320,9 @@ const DISH_TYPE_IMAGES: Record<string, string[]> = {
   ],
   'etouffee': [
     'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800&h=600&fit=crop',
+  ],
+  'fried rice': [
+    'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&h=600&fit=crop',
   ],
   'spring roll': [
     'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=800&h=600&fit=crop',
@@ -641,63 +643,4 @@ export function getCuisineFallbackImage(cuisine: string): string {
 export function getRecipeSearchUrl(recipeTitle: string): string {
   const searchQuery = encodeURIComponent(recipeTitle + ' recipe');
   return `https://www.google.com/search?q=${searchQuery}`;
-}
-
-// --- Unsplash Search API: fetch recipe-matched images from online search ---
-const IMAGE_CACHE_MAX = 500;
-const IMAGE_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-const imageCache = new Map<string, { url: string; expiry: number }>();
-
-function pruneCache(): void {
-  if (imageCache.size <= IMAGE_CACHE_MAX) return;
-  const now = Date.now();
-  for (const [key, entry] of imageCache.entries()) {
-    if (entry.expiry < now) imageCache.delete(key);
-  }
-  if (imageCache.size > IMAGE_CACHE_MAX) {
-    const entries = [...imageCache.entries()].sort((a, b) => a[1].expiry - b[1].expiry);
-    for (let i = 0; i < entries.length && imageCache.size > IMAGE_CACHE_MAX; i++) {
-      imageCache.delete(entries[i][0]);
-    }
-  }
-}
-
-async function fetchRecipeImageFromUnsplash(query: string): Promise<string | null> {
-  const key = process.env.UNSPLASH_ACCESS_KEY;
-  if (!key || !query.trim()) return null;
-  const searchQuery = encodeURIComponent(`${query.trim()} food dish`);
-  const url = `https://api.unsplash.com/search/photos?query=${searchQuery}&per_page=1&orientation=landscape`;
-  try {
-    const res = await fetch(url, {
-      headers: { Authorization: `Client-ID ${key}` },
-      next: { revalidate: 86400 },
-    });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { results?: Array<{ urls?: { regular?: string } }> };
-    const first = data.results?.[0]?.urls?.regular;
-    if (!first) return null;
-    return `${first}&w=800&h=600&fit=crop`;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Returns a recipe-matched image URL by searching Unsplash for the dish name.
- * Uses in-memory cache to avoid rate limits. Falls back to curated keyword match if API is not configured or fails.
- * Call from server components or API routes only (uses env and fetch).
- */
-export async function getFoodImageUrlAsync(searchTerm: string, cuisine?: string): Promise<string> {
-  const cacheKey = `${searchTerm.toLowerCase()}|${cuisine ?? ''}`;
-  const cached = imageCache.get(cacheKey);
-  if (cached && cached.expiry > Date.now()) return cached.url;
-
-  const fromApi = await fetchRecipeImageFromUnsplash(searchTerm);
-  if (fromApi) {
-    imageCache.set(cacheKey, { url: fromApi, expiry: Date.now() + IMAGE_CACHE_TTL_MS });
-    pruneCache();
-    return fromApi;
-  }
-
-  return getFoodImageUrl(searchTerm, cuisine);
 }

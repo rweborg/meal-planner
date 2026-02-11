@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generateRecipes } from '@/lib/claude';
-import { FamilyPreferences, RatingInfo, validateAndRecalculateScores } from '@/lib/prompts';
+import { FamilyPreferences, RatingInfo } from '@/lib/prompts';
 import { getFoodImageUrl, getCuisineFallbackImage } from '@/lib/images';
 
 export async function POST(request: NextRequest) {
@@ -101,13 +101,9 @@ export async function POST(request: NextRequest) {
       mealCount,
     });
 
-    // Validate and recalculate scores using deterministic logic
-    // This ensures dislikes result in low scores (0-20) as expected
-    const validatedRecipes = validateAndRecalculateScores(recipes, familyPreferences);
-
     // Store generated recipes in database with images
     const savedRecipes = await Promise.all(
-      validatedRecipes.map(async (recipe) => {
+      recipes.map(async (recipe) => {
         // Get image URL based on the recipe's title, search term, and cuisine
         const searchTerm = recipe.imageSearchTerm || recipe.title;
         const imageUrl = getFoodImageUrl(searchTerm, recipe.cuisine);
@@ -125,7 +121,6 @@ export async function POST(request: NextRequest) {
             instructions: JSON.stringify(recipe.instructions),
             tips: JSON.stringify(recipe.tips || []),
             nutrition: JSON.stringify(recipe.nutrition || null),
-            familyMatch: JSON.stringify(recipe.familyMatch || []),
             imageUrl,
             aiPromptUsed: promptUsed,
           },
