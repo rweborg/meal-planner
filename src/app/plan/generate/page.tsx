@@ -54,11 +54,17 @@ export default function GeneratePlanPage() {
     setCompletedSteps([]);
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 150_000); // 2.5 min max
+
       const response = await fetch('/api/generate-recipes-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mealCount: 7 }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error('Failed to start generation');
@@ -133,7 +139,10 @@ export default function GeneratePlanPage() {
         router.push('/');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const message = err instanceof Error
+        ? (err.name === 'AbortError' ? 'Generation timed out. Please try again.' : err.message)
+        : 'An error occurred';
+      setError(message);
       setGenerating(false);
     }
   };

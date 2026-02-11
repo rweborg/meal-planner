@@ -205,7 +205,11 @@ Return ONLY a valid JSON array with ${mealCount} recipes. No markdown, no extra 
   "servings": 4,
   "difficulty": "Medium",
   "ingredients": ["2 chicken breasts", "1 cup breadcrumbs", "1/2 cup parmesan cheese", "2 eggs", "1 cup marinara sauce", "1 cup shredded mozzarella", "2 medium zucchini"],
-  "instructions": ["Step 1", "Step 2"],
+  "instructions": [
+    "Preheat oven to 375°F and grease a 9x13 baking dish with butter or cooking spray. Set aside.",
+    "Cook the bacon in a large skillet over medium heat for 8-10 minutes, flipping occasionally, until crispy and golden. Transfer to a paper towel-lined plate to drain, then chop into small pieces.",
+    "In the same skillet, add the ground beef and diced onion. Cook over medium-high heat for 6-8 minutes, breaking up the meat with a spoon, until the beef is browned and no pink remains. Drain any excess fat."
+  ],
   "tips": ["Tip 1"],
   "nutrition": {"calories": 450, "protein": "30g", "carbs": "40g", "fat": "15g"},
   "imageSearchTerm": "dish name",
@@ -217,7 +221,7 @@ Return ONLY a valid JSON array with ${mealCount} recipes. No markdown, no extra 
 IMPORTANT INSTRUCTIONS:
 - Return valid JSON only. No trailing commas. No comments.
 - For ingredients: EACH ingredient MUST include quantity and unit. Use standard measurements: cups, tbsp, tsp, oz, lb, g, ml, cloves, slices, etc. Examples: "2 chicken breasts", "1 cup breadcrumbs", "1/2 tsp salt", "3 cloves garlic", "1 medium onion", "2 tbsp olive oil". Never list ingredients without amounts.
-- For instructions: Write clear, detailed steps. Include specific temperatures (e.g., "375°F"), times, and techniques. Each step should be actionable.
+- For instructions: Each step must be DETAILED and instructional. Include: exact temperatures (e.g., "375°F"), cooking times (e.g., "8-10 minutes"), heat levels (e.g., "medium-high"), techniques (e.g., "whisk until smooth", "sauté until golden"), and doneness cues (e.g., "until no pink remains", "until fragrant"). Break complex actions into separate steps. A cook should be able to follow each step without guessing. Avoid vague phrases like "cook until done"—specify what "done" looks like.
 - For familyMatch: Include a score (0-100) for EACH family member indicating how likely they are to enjoy the dish based on their preferences. Consider their likes, dislikes, favorite cuisines, dietary restrictions, and notes. The reason should be a brief explanation (e.g., "loves Italian cuisine" or "contains disliked ingredient").`;
 
   return prompt;

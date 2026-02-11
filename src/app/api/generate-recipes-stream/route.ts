@@ -152,40 +152,42 @@ export async function POST(request: NextRequest) {
         sendStatus('Processing recipe suggestions...', 7, totalSteps);
         const recipes = parseRecipeResponse(responseText);
 
-        // Step 8: Save recipes (with timeout so client doesn't hang)
-        sendStatus(`Saving ${recipes.length} recipes with images...`, 8, totalSteps);
-        const SAVE_TIMEOUT_MS = 60_000; // 60s
-        let savedRecipes: Awaited<ReturnType<typeof prisma.recipe.create>>[];
-        try {
-          const savePromise = Promise.all(
-            recipes.map(async (recipe) => {
-              const searchTerm = recipe.imageSearchTerm || recipe.title;
-              const imageUrl = getFoodImageUrl(searchTerm, recipe.cuisine);
+        // Step 8: Save recipes sequentially with progress (avoids DB connection pool exhaustion)
+        const savedRecipes: Awaited<ReturnType<typeof prisma.recipe.create>>[] = [];
+        const SAVE_TIMEOUT_MS = 120_000; // 120s total
+        const startTime = Date.now();
 
-              return prisma.recipe.create({
-                data: {
-                  title: recipe.title,
-                  description: recipe.description,
-                  cuisine: recipe.cuisine,
-                  prepTime: recipe.prepTime,
-                  cookTime: recipe.cookTime,
-                  servings: recipe.servings,
-                  difficulty: recipe.difficulty || 'Medium',
-                  ingredients: JSON.stringify(recipe.ingredients),
-                  instructions: JSON.stringify(recipe.instructions),
-                  tips: JSON.stringify(recipe.tips || []),
-                  nutrition: JSON.stringify(recipe.nutrition || null),
-                  familyMatch: JSON.stringify(recipe.familyMatch || []),
-                  imageUrl,
-                  aiPromptUsed: prompt,
-                },
-              });
-            })
-          );
-          const timeoutPromise = new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('Saving recipes timed out. Try again or check database connection.')), SAVE_TIMEOUT_MS)
-          );
-          savedRecipes = await Promise.race([savePromise, timeoutPromise]);
+        try {
+          for (let i = 0; i < recipes.length; i++) {
+            if (Date.now() - startTime > SAVE_TIMEOUT_MS) {
+              throw new Error('Saving recipes timed out. Try again.');
+            }
+            sendStatus(`Saving recipe ${i + 1} of ${recipes.length}...`, 8, totalSteps);
+
+            const recipe = recipes[i];
+            const searchTerm = recipe.imageSearchTerm || recipe.title;
+            const imageUrl = getFoodImageUrl(searchTerm, recipe.cuisine);
+
+            const saved = await prisma.recipe.create({
+              data: {
+                title: recipe.title,
+                description: recipe.description,
+                cuisine: recipe.cuisine,
+                prepTime: recipe.prepTime,
+                cookTime: recipe.cookTime,
+                servings: recipe.servings,
+                difficulty: recipe.difficulty || 'Medium',
+                ingredients: JSON.stringify(recipe.ingredients),
+                instructions: JSON.stringify(recipe.instructions),
+                tips: JSON.stringify(recipe.tips || []),
+                nutrition: JSON.stringify(recipe.nutrition || null),
+                familyMatch: JSON.stringify(recipe.familyMatch || []),
+                imageUrl,
+                aiPromptUsed: prompt,
+              },
+            });
+            savedRecipes.push(saved);
+          }
         } catch (dbError) {
           const msg = dbError instanceof Error ? dbError.message : String(dbError);
           sendError(
