@@ -1,8 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import MemberPreferencesModal from './MemberPreferencesModal';
-
 interface FamilyMatchScore {
   name: string;
   score: number;
@@ -16,7 +13,7 @@ interface FamilyMember {
 
 interface FamilyMatchSectionProps {
   familyMatch: FamilyMatchScore[];
-  members: FamilyMember[];
+  members?: FamilyMember[];
 }
 
 function getMatchColor(score: number): string {
@@ -36,24 +33,7 @@ function getOverallMatch(familyMatch: FamilyMatchScore[]): number {
   return Math.round(familyMatch.reduce((sum, m) => sum + m.score, 0) / familyMatch.length);
 }
 
-export default function FamilyMatchSection({ familyMatch, members }: FamilyMatchSectionProps) {
-  const [selectedMember, setSelectedMember] = useState<{ id: string; name: string } | null>(null);
-
-  // Find member ID by name (case-insensitive match)
-  const findMemberId = (name: string): string | null => {
-    const member = members.find(
-      (m) => m.name.toLowerCase() === name.toLowerCase()
-    );
-    return member?.id || null;
-  };
-
-  const handleNameClick = (name: string) => {
-    const memberId = findMemberId(name);
-    if (memberId) {
-      setSelectedMember({ id: memberId, name });
-    }
-  };
-
+export default function FamilyMatchSection({ familyMatch }: FamilyMatchSectionProps) {
   return (
     <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
       <div className="flex items-center justify-between mb-4">
@@ -80,25 +60,11 @@ export default function FamilyMatchSection({ familyMatch, members }: FamilyMatch
         How likely each family member is to enjoy this dish based on their preferences
       </p>
       <div className="space-y-4">
-        {familyMatch.map((member, idx) => {
-          const memberId = findMemberId(member.name);
-          const isClickable = !!memberId;
-
-          return (
-            <div key={idx} className="flex items-center gap-4">
-              {isClickable ? (
-                <button
-                  onClick={() => handleNameClick(member.name)}
-                  className="w-24 font-medium text-blue-600 hover:text-blue-800 hover:underline truncate text-left"
-                  title={`View ${member.name}'s preferences`}
-                >
-                  {member.name}
-                </button>
-              ) : (
-                <div className="w-24 font-medium text-gray-700 truncate" title={member.name}>
-                  {member.name}
-                </div>
-              )}
+        {familyMatch.map((member, idx) => (
+          <div key={idx} className="flex items-center gap-4">
+            <div className="w-24 font-medium text-gray-700 truncate" title={member.name}>
+              {member.name}
+            </div>
               <div className="flex-1">
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
@@ -122,19 +88,8 @@ export default function FamilyMatchSection({ familyMatch, members }: FamilyMatch
                 {member.reason && <p className="text-xs text-gray-500 mt-1">{member.reason}</p>}
               </div>
             </div>
-          );
-        })}
+        ))}
       </div>
-
-      {/* Member Preferences Modal */}
-      {selectedMember && (
-        <MemberPreferencesModal
-          memberId={selectedMember.id}
-          memberName={selectedMember.name}
-          isOpen={!!selectedMember}
-          onClose={() => setSelectedMember(null)}
-        />
-      )}
     </div>
   );
 }

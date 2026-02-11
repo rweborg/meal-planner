@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import RatingStars from './RatingStars';
-import MemberPreferencesModal from './MemberPreferencesModal';
 
 interface FamilyMatchScore {
   name: string;
@@ -72,7 +71,6 @@ export default function RecipeCard({
 }: RecipeCardProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<{ id: string; name: string } | null>(null);
   const router = useRouter();
   const fallbackImage = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&h=600&fit=crop';
 
@@ -215,17 +213,12 @@ export default function RecipeCard({
             <div className="space-y-2">
               {memberRatings.map((rating) => (
                 <div key={rating.memberId} className="flex items-start gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setSelectedMember({ id: rating.memberId, name: rating.memberName });
-                    }}
-                    className="text-xs text-blue-700 hover:text-blue-900 hover:underline font-medium w-20 truncate text-left"
-                    title={`View ${rating.memberName}'s preferences`}
+                  <span
+                    className="text-xs text-blue-800 font-medium w-20 truncate"
+                    title={rating.memberName}
                   >
                     {rating.memberName}
-                  </button>
+                  </span>
                   <div className="flex-1">
                     <RatingStars value={rating.score} readonly size="sm" />
                     {rating.comment && (
@@ -288,16 +281,6 @@ export default function RecipeCard({
           </div>
         )}
       </div>
-
-      {/* Member Preferences Modal */}
-      {selectedMember && (
-        <MemberPreferencesModal
-          memberId={selectedMember.id}
-          memberName={selectedMember.name}
-          isOpen={!!selectedMember}
-          onClose={() => setSelectedMember(null)}
-        />
-      )}
     </div>
   );
 }
