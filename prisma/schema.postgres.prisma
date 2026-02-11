@@ -63,10 +63,25 @@ model Rating {
 }
 
 model MealPlan {
-  id        String           @id @default(cuid())
-  weekStart DateTime
-  createdAt DateTime         @default(now())
-  recipes   MealPlanRecipe[]
+  id             String           @id @default(cuid())
+  weekStart      DateTime
+  createdAt      DateTime         @default(now())
+  recipes        MealPlanRecipe[]
+  generationJob GenerationJob?
+}
+
+model GenerationJob {
+  id          String    @id @default(cuid())
+  status      String    // pending | running | completed | failed
+  step        Int       @default(0)
+  stepMessage String?   // e.g. "Saving recipe 3 of 7..."
+  totalSteps  Int       @default(8)
+  error       String?   // set when status=failed
+  mealPlanId  String?   @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  mealPlan    MealPlan? @relation(fields: [mealPlanId], references: [id])
 }
 
 model MealPlanRecipe {

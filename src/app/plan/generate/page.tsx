@@ -11,31 +11,12 @@ interface FamilyMember {
   };
 }
 
-interface StatusUpdate {
-  status: string;
-  step: number;
-  totalSteps: number;
-}
-
-const STEP_ICONS: Record<number, string> = {
-  1: '👨‍👩‍👧‍👦',
-  2: '📋',
-  3: '⭐',
-  4: '📅',
-  5: '✍️',
-  6: '🤖',
-  7: '📝',
-  8: '💾',
-};
-
 export default function GeneratePlanPage() {
   const router = useRouter();
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentStatus, setCurrentStatus] = useState<StatusUpdate | null>(null);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -50,99 +31,24 @@ export default function GeneratePlanPage() {
   const generatePlan = async () => {
     setGenerating(true);
     setError(null);
-    setCurrentStatus(null);
-    setCompletedSteps([]);
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 150_000); // 2.5 min max
-
-      const response = await fetch('/api/generate-recipes-stream', {
+      const response = await fetch('/api/generation/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mealCount: 7 }),
-        signal: controller.signal,
       });
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
-        throw new Error('Failed to start generation');
+        const errBody = await response.json().catch(() => ({}));
+        const message = (errBody as { error?: string })?.error || response.statusText || 'Failed to start generation';
+        throw new Error(message);
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('No response stream');
-      }
-
-      const decoder = new TextDecoder();
-      let recipes = null;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-
-              if (data.type === 'status') {
-                // Mark previous steps as completed
-                setCompletedSteps(prev => {
-                  const newCompleted = [...prev];
-                  for (let i = 1; i < data.step; i++) {
-                    if (!newCompleted.includes(i)) {
-                      newCompleted.push(i);
-                    }
-                  }
-                  return newCompleted;
-                });
-                setCurrentStatus(data);
-              } else if (data.type === 'complete') {
-                recipes = data.recipes;
-                // Mark all steps as completed
-                setCompletedSteps([1, 2, 3, 4, 5, 6, 7, 8]);
-              } else if (data.type === 'error') {
-                throw new Error(data.error);
-              }
-            } catch (e) {
-              // Skip invalid JSON
-              if (e instanceof SyntaxError) continue;
-              throw e;
-            }
-          }
-        }
-      }
-
-      if (recipes) {
-        setCurrentStatus({ status: 'Creating meal plan...', step: 9, totalSteps: 9 });
-
-        // Create meal plan
-        const planRes = await fetch('/api/meal-plans', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ recipes }),
-        });
-
-        if (!planRes.ok) {
-          const errBody = await planRes.json().catch(() => ({}));
-          const message = (errBody as { error?: string })?.error || planRes.statusText || 'Failed to create meal plan';
-          throw new Error(message);
-        }
-
-        setCurrentStatus({ status: 'Done! Redirecting...', step: 9, totalSteps: 9 });
-        await new Promise(resolve => setTimeout(resolve, 500));
-        router.push('/');
-      }
+      const { jobId } = await response.json();
+      router.push(`/?jobId=${encodeURIComponent(jobId)}`);
     } catch (err) {
-      const message = err instanceof Error
-        ? (err.name === 'AbortError' ? 'Generation timed out. Please try again.' : err.message)
-        : 'An error occurred';
-      setError(message);
+      setError(err instanceof Error ? err.message : 'An error occurred');
       setGenerating(false);
     }
   };
@@ -214,63 +120,23 @@ export default function GeneratePlanPage() {
         </div>
       )}
 
-      {/* Generate Button / Progress */}
+      {/* Generate Button */}
       <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-        {generating ? (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-lg font-semibold mb-2">Generating Your Meal Plan</h2>
-              <p className="text-gray-500 text-sm">Please wait while we create personalized recipes...</p>
-            </div>
+        <div className="text-center">
+          <h2 className="text-lg font-semibold mb-2">Ready to Generate?</h2>
+          <p className="text-gray-600 mb-6">
+            Our AI will create 7 dinner recipes tailored to your family&apos;s preferences.
+            You can leave this page—generation continues in the background.
+          </p>
 
-            {/* Current Step Display */}
-            {currentStatus && (
-              <div className="flex flex-col items-center gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{STEP_ICONS[currentStatus.step] || '🔄'}</span>
-                  <span className="text-lg text-gray-700">{currentStatus.status}</span>
-                  <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full" />
-                </div>
-
-                {/* Progress bar */}
-                <div className="w-full">
-                  <div className="flex justify-between text-sm text-gray-500 mb-1">
-                    <span>Step {currentStatus.step} of {currentStatus.totalSteps}</span>
-                    <span>{Math.round((completedSteps.length / 8) * 100)}%</span>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-600 transition-all duration-500"
-                      style={{ width: `${(completedSteps.length / 8) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {!currentStatus && (
-              <div className="flex items-center justify-center gap-3">
-                <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full" />
-                <span className="text-gray-500">Starting...</span>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center">
-            <h2 className="text-lg font-semibold mb-2">Ready to Generate?</h2>
-            <p className="text-gray-600 mb-6">
-              Our AI will create 7 dinner recipes tailored to your family&apos;s preferences.
-            </p>
-
-            <button
-              onClick={generatePlan}
-              disabled={members.length === 0}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Generate Weekly Plan
-            </button>
-          </div>
-        )}
+          <button
+            onClick={generatePlan}
+            disabled={members.length === 0 || generating}
+            className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {generating ? 'Starting...' : 'Generate Weekly Plan'}
+          </button>
+        </div>
 
         {error && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">

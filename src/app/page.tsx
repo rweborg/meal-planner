@@ -1,6 +1,8 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { prisma } from '@/lib/db';
 import WeeklyPlan from '@/components/WeeklyPlan';
+import GenerationProgressBanner from '@/components/GenerationProgressBanner';
 import { getFoodImageUrlAsync } from '@/lib/images';
 
 export const dynamic = 'force-dynamic';
@@ -68,6 +70,10 @@ export default async function Dashboard() {
 
   return (
     <div className="space-y-8">
+      <Suspense fallback={null}>
+        <GenerationProgressBanner />
+      </Suspense>
+
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-500 via-purple-400 to-blue-400 rounded-xl p-8 shadow-lg border-4 border-purple-600">
         <div className="flex items-center gap-4 mb-3">
