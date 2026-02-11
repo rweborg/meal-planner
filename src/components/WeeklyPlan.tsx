@@ -19,6 +19,7 @@ interface MealPlanRecipe {
     cuisine: string;
     prepTime: number;
     cookTime: number;
+    imageUrl?: string | null;
     familyMatch?: string | null;
   };
 }
@@ -85,6 +86,15 @@ export default function WeeklyPlan({ weekStart, meals, onRegenerateMeal }: Weekl
                   <p className="text-xs font-medium text-gray-500 uppercase mb-2">Dinner</p>
                   {dinner ? (
                     <div className="space-y-2">
+                      {dinner.recipe.imageUrl && (
+                        <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-2 bg-gray-100">
+                          <img
+                            src={dinner.recipe.imageUrl}
+                            alt={dinner.recipe.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
                       <Link
                         href={`/recipes/${dinner.recipe.id}`}
                         className="block text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
